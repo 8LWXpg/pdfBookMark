@@ -5,10 +5,10 @@ param (
 )
 
 if (-not $pdf) {
-    Read-Host 'pdf file path'
+    $pdf = Read-Host 'pdf file path'
 }
 if (-not $str) {
-    Read-Host 'string to find'
+    $str = Read-Host 'string to find'
 }
 
 $get = gswin64c -sDEVICE=txtwrite -o- $pdf | Select-String $str, 'page'
