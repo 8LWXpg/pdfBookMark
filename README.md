@@ -11,4 +11,4 @@ both installed and added to the PATH
 
 ## Usage
 
-`PS> pdfBMadd.ps1 <pdf> <string>`
+`PS> pdfBMadd.ps1 <pdf> <string> [<level>]`
