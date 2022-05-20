@@ -1,7 +1,8 @@
 param (
     [Parameter(ValueFromPipeline = $true)]
     [System.IO.FileInfo]$pdf,
-    [string]$str
+    [string]$str,
+    [string]$level = 1
 )
 
 if (-not $pdf) {
@@ -11,11 +12,13 @@ if (-not $str) {
     $str = Read-Host 'string to find'
 }
 
+# get "page","$str" from pdf strings
 $get = gswin64c -sDEVICE=txtwrite -o- $pdf | Select-String $str, 'page'
 if (!$?) {
     return
 }
 
+# loop through ench line and record continuous numbers in pages
 $out = @()
 $count = 0
 switch -regex ($get) {
@@ -29,13 +32,14 @@ switch -regex ($get) {
     Default {}
 }
 
+# add bookmarks
 $temp = "$($pdf.DirectoryName)\$($pdf.BaseName)_BMadd$($pdf.Extension)"
 pdftk $pdf dump_data_utf8 output - | ForEach-Object {
     if ($_ -match 'NumberOfPages') {
         for ($i = 0; $i -lt $out.Count; $i++) {
             'BookmarkBegin'
             "BookmarkTitle: $str $($i+1)"
-            "BookmarkLevel: 1"
+            "BookmarkLevel: $level"
             "BookmarkPageNumber: $($out[$i])"
         }
     }
