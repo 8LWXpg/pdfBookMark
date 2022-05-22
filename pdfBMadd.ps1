@@ -2,7 +2,7 @@ param (
     [Parameter(ValueFromPipeline = $true)]
     [System.IO.FileInfo]$pdf,
     [string]$str,
-    [string]$level = 1
+    [int]$start = 1
 )
 
 if (-not $pdf) {
@@ -20,7 +20,7 @@ if (!$?) {
 
 # loop through ench line and record continuous numbers in pages
 $out = @()
-$count = 0
+$count = $start - 1
 switch -regex ($get) {
     'page (\d+)' { $page = $Matches[1] }
     "$str +(\d+)" {
@@ -33,13 +33,16 @@ switch -regex ($get) {
 }
 
 # add bookmarks
-$temp = "$($pdf.DirectoryName)\$($pdf.BaseName)_BMadd$($pdf.Extension)"
+[System.IO.FileInfo]$temp = "$($pdf.DirectoryName)\$($pdf.BaseName)_BMadd$($pdf.Extension)"
+if ($temp.Exists) {
+    Remove-Item $temp
+}
 pdftk $pdf dump_data_utf8 output - | ForEach-Object {
     if ($_ -match 'NumberOfPages') {
         for ($i = 0; $i -lt $out.Count; $i++) {
             'BookmarkBegin'
-            "BookmarkTitle: $str $($i+1)"
-            "BookmarkLevel: $level"
+            "BookmarkTitle: $str $($i+$start)"
+            "BookmarkLevel: 1"
             "BookmarkPageNumber: $($out[$i])"
         }
     }
