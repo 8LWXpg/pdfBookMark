@@ -12,3 +12,13 @@ both installed and added to the PATH
 ## Usage
 
 `PS> pdfBMadd.ps1 <pdf> <string> [<start count>]`
+
+### before
+
+![before](https://i.imgur.com/ETIQzxk.png)
+
+### after
+
+`PS> pdfBMadd.ps1 <pdf> Chapter`
+
+![after](https://i.imgur.com/OAsVc26.png)
