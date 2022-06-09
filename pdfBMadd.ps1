@@ -5,10 +5,10 @@ param (
     [int]$start = 1
 )
 
-if (-not $pdf) {
+while (-not $pdf) {
     $pdf = Read-Host 'pdf file path'
 }
-if (-not $str) {
+while (-not $str) {
     $str = Read-Host 'string to find'
 }
 
