@@ -2,38 +2,51 @@ param (
     [Parameter(ValueFromPipeline = $true)]
     [System.IO.FileInfo]$pdf,
     [string]$str,
-    [int]$start = 1
+    [int[]]$page = $null,
+    [int]$start = 1,
+    [switch]$content
 )
 
-while (-not $pdf) {
+while (!$pdf) {
     $pdf = Read-Host 'pdf file path'
 }
-while (-not $str) {
+while (!$str) {
     $str = Read-Host 'string to find'
 }
 
-# get "page","$str" from pdf strings
-$get = gswin64c -sDEVICE=txtwrite -o- $pdf | Select-String $str, 'page'
-if (!$?) {
-    return
-}
+if ($content) {
+    $get = gswin64c -sDEVICE=txtwrite "-dFirstPage=$($page[0])" "-dLastPage=$($page[-1])" -o- $pdf
+    $out = @((Select-String "$str *\d*\D*(\d+)" -InputObject ($get -join "`n") -AllMatches).Matches | ForEach-Object {
+            $_.Groups[1].Value
+        })
 
-# loop through ench line and record continuous numbers in pages
-$out = @()
-$count = $start - 1
-switch -regex ($get) {
-    'page (\d+)' { $page = $Matches[1] }
-    "$str +(\d+)" {
-        if ($Matches[1] -eq $count + 1) {
-            $out += $page
-            $count = $Matches[1].ToInt32($null)
-        }
+} else {
+    # get "page","$str" from the text in pdf
+    $get = gswin64c -sDEVICE=txtwrite -o- $pdf | Select-String $str, 'page'
+    if (!$?) {
+        return
     }
-    Default {}
+
+    # loop through ench line and record continuous numbers in pages
+    $out = @()
+    $count = $start - 1
+    $cur_page = '1'
+    switch -regex ($get) {
+        'page (\d+)' {
+            $cur_page = $Matches[1]
+        }
+        "$str *(\d+)" {
+            if ($Matches[1] -eq $count + 1 -and $cur_page -notin $page) {
+                $out += $cur_page
+                $count = $Matches[1].ToInt32($null)
+            }
+        }
+        Default {}
+    }
 }
 
 # add bookmarks
-[System.IO.FileInfo]$temp = "$($pdf.DirectoryName)\$($pdf.BaseName)_BMadd$($pdf.Extension)"
+[System.IO.FileInfo]$temp = "$($pdf.DirectoryName)\$($pdf.BaseName)_BMadd.pdf"
 if ($temp.Exists) {
     Remove-Item $temp
 }
