@@ -15,14 +15,14 @@ while (!$str) {
 }
 
 if ($content) {
-    $get = gswin64c -sDEVICE=txtwrite "-dFirstPage=$($page[0])" "-dLastPage=$($page[-1])" -o- $pdf
+    $get = gswin64c -sDEVICE=txtwrite -dQUIET "-dFirstPage=$($page[0])" "-dLastPage=$($page[-1])" -o- $pdf
     $out = @((Select-String "$str *\d*\D*(\d+)" -InputObject ($get -join "`n") -AllMatches).Matches | ForEach-Object {
             $_.Groups[1].Value
         })
 
 } else {
     # get "page","$str" from the text in pdf
-    $get = gswin64c -sDEVICE=txtwrite -o- $pdf | Select-String $str, 'page'
+    $get = gswin64c -sDEVICE=txtwrite -dQUIET -o- $pdf | Select-String $str, 'page'
     if (!$?) {
         return
     }
