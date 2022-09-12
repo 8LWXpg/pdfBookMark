@@ -13,17 +13,21 @@ both installed and added to the PATH
 
 ### **find string in sepecific pages**
 
-> `PS> pdfBMadd.ps1 <pdf> <string> [<pages to omit>] [<start count>]`
+> `PS> all.ps1 <pdf> [<string>='Chapter'] [<pages to omit>]`
+
+#### *for pages, use (1..10+15) to express page 1 to 10 plus page 15*
 
 ### **find string in table of contents**
 
-> `PS> pdfBMadd.ps1 <pdf> <string> <page range> [<start count>] -content`
+> `PS> table.ps1 <pdf> <page range> <offset> [<string>='Chapter'] [-text <text file>]`
 
-#### *for page range, use (1..10+15) to express page 1 to 10 plus page 15*
+#### *Use 8,10 to specify page range 8-10*
+
+#### *Pdf text output may be incorrect sometimes. In that case, please use `gs -sDEVICE=txtwrite` to output text then modify manually, and use -text switch instead of page range*
 
 ## Example
 
-> `PS> pdfBMadd.ps1 <pdf> Chapter`
+> `PS> all.ps1 <pdf>`
 
 ### before
 
