@@ -1,62 +1,64 @@
 param (
-    [Parameter(ValueFromPipeline = $true)]
-    [System.IO.FileInfo]$pdf,
-    [string]$str,
-    [int[]]$page = $null,
-    [int]$start = 1,
-    [switch]$content
+	[Parameter(ValueFromPipeline = $true)]
+	[System.IO.FileInfo]$pdf,
+	[string]$str,
+	[int[]]$page = $null,
+	[int]$start = 1,
+	[switch]$content
 )
 
-while (!$pdf) {
-    $pdf = Read-Host 'pdf file path'
+if (!$pdf.Exists -or $pdf.Extension -ne '.pdf') {
+	Write-Error 'pdf not found'
+	return
 }
-while (!$str) {
-    $str = Read-Host 'string to find'
+if (!$str) {
+	Write-Error 'no string to match specified'
+	return
 }
 
 if ($content) {
-    $get = gswin64c -sDEVICE=txtwrite -dQUIET "-dFirstPage=$($page[0])" "-dLastPage=$($page[-1])" -o- $pdf
-    $out = @((Select-String "$str *\d*\D*(\d+)" -InputObject ($get -join "`n") -AllMatches).Matches | ForEach-Object {
-            $_.Groups[1].Value
-        })
+	$get = gswin64c -sDEVICE=txtwrite -dQUIET "-dFirstPage=$($page[0])" "-dLastPage=$($page[-1])" -o- $pdf
+	$out = @((Select-String "$str *\d*\D*(\d+)" -InputObject ($get -join "`n") -AllMatches).Matches | ForEach-Object {
+			$_.Groups[1].Value
+		})
 
 } else {
-    # get "page","$str" from the text in pdf
-    $get = gswin64c -sDEVICE=txtwrite -dQUIET -o- $pdf | Select-String $str, 'page'
-    if (!$?) {
-        return
-    }
+	# get "page","$str" from the text in pdf
+	$get = gswin64c -sDEVICE=txtwrite -dQUIET -o- $pdf | Select-String $str, 'page'
+	if (!$?) {
+		return
+	}
 
-    # loop through ench line and record continuous numbers in pages
-    $out = @()
-    $count = $start - 1
-    $cur_page = '1'
-    switch -regex ($get) {
-        'page (\d+)' {
-            $cur_page = $Matches[1]
-        }
-        "$str *(\d+)" {
-            if ($Matches[1] -eq $count + 1 -and $cur_page -notin $page) {
-                $out += $cur_page
-                $count = $Matches[1].ToInt32($null)
-            }
-        }
-        Default {}
-    }
+	# loop through ench line and record continuous numbers in pages
+	$out = @()
+	$count = $start - 1
+	$cur_page = '1'
+	switch -regex ($get) {
+		'page (\d+)' {
+			$cur_page = $Matches[1]
+		}
+		"$str *(\d+)" {
+			if ($Matches[1] -eq $count + 1 -and $cur_page -notin $page) {
+				$out += $cur_page
+				$count = $Matches[1].ToInt32($null)
+			}
+		}
+		Default {}
+	}
 }
 
 # add bookmarks
 [System.IO.FileInfo]$temp = "$($pdf.DirectoryName)\$($pdf.BaseName)_BMadd.pdf"
 if ($temp.Exists) {
-    Remove-Item $temp
+	Remove-Item $temp
 }
 pdftk $pdf dump_data_utf8 output - | ForEach-Object {
-    if ($_ -match 'NumberOfPages') {
-        for ($i = 0; $i -lt $out.Count; $i++) {
-            'BookmarkBegin'
-            "BookmarkTitle: $str $($i+$start)"
-            "BookmarkLevel: 1"
-            "BookmarkPageNumber: $($out[$i])"
-        }
-    }
+	if ($_ -match 'NumberOfPages') {
+		for ($i = 0; $i -lt $out.Count; $i++) {
+			'BookmarkBegin'
+			"BookmarkTitle: $str $($i+$start)"
+			"BookmarkLevel: 1"
+			"BookmarkPageNumber: $($out[$i])"
+		}
+	}
 } | pdftk $pdf update_info_utf8 - output $temp
