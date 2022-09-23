@@ -21,7 +21,7 @@ if (!$?) {
 	return
 }
 
-# loop through ench line and record continuous numbers in pages
+# loop through each line and record continuous numbers in pages
 $out = @()
 $count = 0
 $cur_page = '1'
