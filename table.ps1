@@ -43,7 +43,6 @@ for ($i = 1; $i -le $level1.Count; $i++) {
 		})
 }
 
-
 # add bookmarks
 [System.IO.FileInfo]$temp = "$($pdf.DirectoryName)\$($pdf.BaseName)_BMadd.pdf"
 if ($temp.Exists) {
