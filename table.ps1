@@ -9,15 +9,15 @@ param (
 )
 
 if (!$pdf.Exists -or $pdf.Extension -ne '.pdf') {
-	Write-Error 'pdf not found'
+	Write-Error 'pdf not found' -Category OpenError
 	return
 }
 if (!$str) {
-	Write-Error 'no string to match specified'
+	Write-Error 'no string to match specified' -Category InvalidArgument
 	return
 }
 if (!$page -and !$text.Exists) {
-	Write-Error 'no content page specified'
+	Write-Error 'no content page specified' -Category InvalidArgument
 	return
 }
 
