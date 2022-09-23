@@ -25,7 +25,7 @@ if (!$page -and !$text.Exists) {
 if ($text) {
 	$get = Get-Content $text.FullName
 } else {
-	$get = gswin64c -sDEVICE=txtwrite -dQUIET "-dFirstPage=$($page[0])" "-dLastPage=$($page[-1])" -o- $pdf
+	$get = gswin64c -sDEVICE=txtwrite -q "-dFirstPage=$($page[0])" "-dLastPage=$($page[-1])" -o- $pdf
 }
 $level1 = @((Select-String "$str *(\d+)\D+?(?:(\S+)\s+)+?(\d+)" -InputObject ($get -join "`n") -AllMatches).Matches | ForEach-Object {
 		[PSCustomObject]@{
