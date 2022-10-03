@@ -14,7 +14,6 @@ if (!$str) {
 	return
 }
 
-
 # get "page","$str" from the text in pdf
 $get = gswin64c -sDEVICE=txtwrite -q -o- $pdf | Select-String $str, 'page' || return
 
@@ -34,7 +33,6 @@ switch -regex ($get) {
 	}
 	Default {}
 }
-
 
 # add bookmarks
 [System.IO.FileInfo]$temp = "$($pdf.DirectoryName)\$($pdf.BaseName)_BMadd.pdf"
