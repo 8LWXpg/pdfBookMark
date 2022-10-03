@@ -16,12 +16,9 @@ if (!$str) {
 
 
 # get "page","$str" from the text in pdf
-$get = gswin64c -sDEVICE=txtwrite -q -o- $pdf | Select-String $str, 'page'
-if (!$?) {
-	return
-}
+$get = gswin64c -sDEVICE=txtwrite -q -o- $pdf | Select-String $str, 'page' || return
 
-# loop through ench line and record continuous numbers in pages
+# loop through each line and record continuous numbers in pages
 $out = @()
 $count = 0
 $cur_page = '1'
