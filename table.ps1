@@ -1,23 +1,23 @@
 param (
-	[Parameter(ValueFromPipeline = $true)]
-	[System.IO.FileInfo]$pdf,
+	[Parameter(ValueFromPipeline = $true, Mandatory)]
+	[string]$pdf,
+	[Parameter(Mandatory)]
 	[int[]]$page,
 	[int]$offset = 0,
 	[string]$str = 'Chapter',
 	[string]$char = '.',
-	[System.IO.FileInfo]$text = $null
+	[string]$text = $null
 )
+[System.IO.Directory]::SetCurrentDirectory($PWD)
+[System.IO.FileInfo]$pdf = $pdf
+[System.IO.FileInfo]$text = $text
 
 if (!$pdf.Exists -or $pdf.Extension -ne '.pdf') {
 	Write-Error 'pdf not found' -Category OpenError
 	return
 }
-if (!$str) {
-	Write-Error 'no string to match specified' -Category InvalidArgument
-	return
-}
 if (!$page -and !$text.Exists) {
-	Write-Error 'no content page specified' -Category InvalidArgument
+	Write-Error 'no content page or text input specified' -Category InvalidArgument
 	return
 }
 
@@ -54,12 +54,12 @@ pdftk $pdf dump_data_utf8 output - | ForEach-Object {
 		for ($i = 0; $i -lt $level1.Count; $i++) {
 			'BookmarkBegin'
 			"BookmarkTitle: $($level1[$i].Str)"
-			"BookmarkLevel: 1"
+			'BookmarkLevel: 1'
 			"BookmarkPageNumber: $($level1[$i].Page+$offset)"
 			for ($j = 0; $j -lt $level2[$i].Count; $j++) {
 				'BookmarkBegin'
 				"BookmarkTitle: $($level2[$i][$j].Str)"
-				"BookmarkLevel: 2"
+				'BookmarkLevel: 2'
 				"BookmarkPageNumber: $($level2[$i][$j].Page+$offset)"
 			}
 		}

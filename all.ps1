@@ -1,9 +1,11 @@
 param (
-	[Parameter(ValueFromPipeline = $true)]
-	[System.IO.FileInfo]$pdf,
+	[Parameter(ValueFromPipeline = $true, Mandatory)]
+	[string]$pdf,
 	[string]$str = 'Chapter',
 	[int[]]$omit = $null
 )
+[System.IO.Directory]::SetCurrentDirectory($PWD)
+[System.IO.FileInfo]$pdf = $pdf
 
 if (!$pdf.Exists -or $pdf.Extension -ne '.pdf') {
 	Write-Error 'pdf not found' -Category OpenError
@@ -44,7 +46,7 @@ pdftk $pdf dump_data_utf8 output - | ForEach-Object {
 		for ($i = 0; $i -lt $out.Count; $i++) {
 			'BookmarkBegin'
 			"BookmarkTitle: $str $($i+1)"
-			"BookmarkLevel: 1"
+			'BookmarkLevel: 1'
 			"BookmarkPageNumber: $($out[$i])"
 		}
 	}
