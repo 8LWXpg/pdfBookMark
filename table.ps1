@@ -1,16 +1,14 @@
 param (
 	[Parameter(ValueFromPipeline = $true, Mandatory)]
 	[string]$pdf,
-	[Parameter(Mandatory)]
 	[int[]]$page,
 	[int]$offset = 0,
 	[string]$str = 'Chapter',
 	[string]$char = '.',
 	[string]$text = $null
 )
-[System.IO.Directory]::SetCurrentDirectory($PWD)
-[System.IO.FileInfo]$pdf = $pdf
-[System.IO.FileInfo]$text = $text
+[System.IO.FileInfo]$pdf = (Resolve-Path $pdf).Path
+[System.IO.FileInfo]$text = (Resolve-Path $text).Path
 
 if (!$pdf.Exists -or $pdf.Extension -ne '.pdf') {
 	Write-Error 'pdf not found' -Category OpenError
