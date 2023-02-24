@@ -1,51 +1,58 @@
 param (
-	[Parameter(ValueFromPipeline = $true, Mandatory)]
+	[Parameter(ValueFromPipeline, Mandatory)]
 	[string]$pdf,
 	[int[]]$page,
 	[int]$offset = 0,
 	[string]$str = 'Chapter',
 	[string]$char = '.',
-	[string]$text = $null
+	[string]$text
 )
-[System.IO.FileInfo]$pdf = (Resolve-Path $pdf).Path
-[System.IO.FileInfo]$text = (Resolve-Path $text).Path
-
-if (!$pdf.Exists -or $pdf.Extension -ne '.pdf') {
-	Write-Error 'pdf not found' -Category OpenError
-	return
-}
-if (!$page -and !$text.Exists) {
-	Write-Error 'no content page or text input specified' -Category InvalidArgument
-	return
-}
 
 # get table of content and match
 if ($text) {
-	$get = Get-Content $text.FullName
-} else {
-	$get = gswin64c -sDEVICE=txtwrite -q "-dFirstPage=$($page[0])" "-dLastPage=$($page[-1])" -o- $pdf
+	[System.IO.FileInfo]$text = (Resolve-Path $text).Path
+	if (!$text.Exists) {
+		Write-Error "File not found: $text"
+		Exit
+	}
 }
-$level1 = @((Select-String "$str *(\d+)\D+?(?:(\S+)\s+)+?(\d+)" -InputObject ($get -join "`n") -AllMatches).Matches | ForEach-Object {
+[System.IO.FileInfo]$pdf = (Resolve-Path $pdf).Path
+if (!$pdf.Exists || $pdf.Extension -ne '.pdf') {
+	Write-Error "File not found: $pdf"
+	Exit
+}
+$get = $text ? (Get-Content $text.FullName -Raw)
+:(gswin64c -sDEVICE=txtwrite -q "-dFirstPage=$($page[0])" "-dLastPage=$($page[-1])" -o- $pdf) -join "`n"
+
+$level1 = @((Select-String "$str *(\d+)\D+?(?:(\S+)\s+)+?(\d+)" -InputObject $get -AllMatches).Matches | ForEach-Object {
+		# convert to lower case and capitalize first letter
+		$temp = ("$str $($_.Groups[1].Value) $($_.Groups[2].Captures)").ToLower().ToCharArray()
+		$temp[0] = [char]::ToUpper($temp[0])
 		[PSCustomObject]@{
-			Str  = "$str $($_.Groups[1].Value) $($_.Groups[2].Captures)"
+			Str  = [string]::new($temp)
 			Page = $_.Groups[3].Value.ToInt32($null)
 		}
 	})
+$level1 = $level1 | Sort-Object Page
 $level2 = @()
 for ($i = 1; $i -le $level1.Count; $i++) {
-	$level2 += , @((Select-String "(?<!\d)($i\.\d+)\D+?(?:(\S+)\s+)+?(\d+)" -InputObject ($get -join "`n") -AllMatches).Matches | ForEach-Object {
+	$level2 += , @((Select-String "(?<!\d)($i\.\d+)\D+?(?:(\S+)\s+)+?(\d+)" -InputObject $get -AllMatches).Matches | ForEach-Object {
+			# convert to string then insert space before upper case letter if it doesn't has one
+			$temp = "$($_.Groups[2].Captures)"
+			$temp = $temp -creplace '([a-z])([A-Z])', '$1 $2'
 			[PSCustomObject]@{
-				Str  = "$($_.Groups[1].Value) $($_.Groups[2].Captures)"
+				Str  = "$($_.Groups[1].Value) $temp"
 				Page = $_.Groups[3].Value.ToInt32($null)
 			}
 		})
 }
 
 # add bookmarks
-[System.IO.FileInfo]$temp = "$($pdf.DirectoryName)\$($pdf.BaseName)_BMadd.pdf"
-if ($temp.Exists) {
-	Remove-Item $temp
+[System.IO.FileInfo]$tmpfile = "$($pdf.DirectoryName)\$($pdf.BaseName)_BMadd.pdf"
+if ($tmpfile.Exists) {
+	Remove-Item $tmpfile
 }
+$offset -= 1
 pdftk $pdf dump_data_utf8 output - | ForEach-Object {
 	$_
 	if ($_ -match 'NumberOfPages') {
@@ -62,4 +69,4 @@ pdftk $pdf dump_data_utf8 output - | ForEach-Object {
 			}
 		}
 	}
-} | pdftk $pdf update_info_utf8 - output $temp
+} | pdftk $pdf update_info_utf8 - output $tmpfile
