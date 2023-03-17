@@ -2,7 +2,7 @@ param (
 	[Parameter(ValueFromPipeline, Mandatory)]
 	[string]$pdf,
 	[int[]]$page,
-	[int]$offset = 0,
+	[int]$offset = 1,
 	[string]$str = 'Chapter',
 	[string]$char = '.',
 	[string]$text
@@ -22,7 +22,7 @@ if (!$pdf.Exists || $pdf.Extension -ne '.pdf') {
 	Exit
 }
 $get = $text ? (Get-Content $text.FullName -Raw)
-:(gswin64c -sDEVICE=txtwrite -q "-dFirstPage=$($page[0])" "-dLastPage=$($page[-1])" -o- $pdf) -join "`n"
+:(pdftotext -f $page[0] -l $page[-1] -layout -nopgbrk -raw $pdf - | Out-String)
 
 $level1 = @((Select-String "$str *(\d+)\D+?(?:(\S+)\s+)+?(\d+)" -InputObject $get -AllMatches).Matches | ForEach-Object {
 		# convert to lower case and capitalize first letter
@@ -36,7 +36,7 @@ $level1 = @((Select-String "$str *(\d+)\D+?(?:(\S+)\s+)+?(\d+)" -InputObject $ge
 $level1 = $level1 | Sort-Object Page
 $level2 = @()
 for ($i = 1; $i -le $level1.Count; $i++) {
-	$level2 += , @((Select-String "(?<!\d)($i\.\d+)\D+?(?:(\S+)\s+)+?(\d+)" -InputObject $get -AllMatches).Matches | ForEach-Object {
+	$temp_table = @((Select-String "(?<!\d)($i\.\d+)\D+?(?:(\S+)\s+)+?(\d+)" -InputObject $get -AllMatches).Matches | ForEach-Object {
 			# convert to string then insert space before upper case letter if it doesn't has one
 			$temp = "$($_.Groups[2].Captures)"
 			$temp = $temp -creplace '([a-z])([A-Z])', '$1 $2'
@@ -45,6 +45,7 @@ for ($i = 1; $i -le $level1.Count; $i++) {
 				Page = $_.Groups[3].Value.ToInt32($null)
 			}
 		})
+	$level2 += , ($temp_table | Sort-Object Page)
 }
 
 # add bookmarks

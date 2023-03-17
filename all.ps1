@@ -16,7 +16,7 @@ if (!$str) {
 }
 
 # get "page","$str" from the text in pdf
-$get = gswin64c -sDEVICE=txtwrite -q -o- $pdf | Select-String $str, 'page' || return
+$get = pdftotext -layout -nopgbrk -raw $pdf | Select-String $str, 'page' || return
 
 # loop through each line and record continuous numbers in pages
 $out = @()
@@ -32,7 +32,6 @@ switch -regex ($get) {
 			$count = $Matches[1].ToInt32($null)
 		}
 	}
-	Default {}
 }
 
 # add bookmarks
