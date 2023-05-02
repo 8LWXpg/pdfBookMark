@@ -1,6 +1,6 @@
 # pdfBookMark
 
-find specific string in pdf then add it into bookmark
+extract table of contents from pdf into bookmarks
 
 ## Requirements
 
@@ -13,19 +13,25 @@ both installed and added to the PATH
 
 ## Usage
 
-### **find string in specific pages**
+### find string in specific pages
 
 > `PS> all.ps1 <pdf> [<string> = 'Chapter'] [<pages to omit>]`
 
 #### *for pages, use (1..10+15) to express page 1 to 10 plus page 15*
 
-### **find string in table of contents**
+### extract table of contents
 
 > `PS> table.ps1 <pdf> <page range> [<page count of page 1>] [<str>] [<separate char>]`
 
 #### *Use 8,10 to specify page range 8-10*
 
-#### *Pdf text output may be incorrect sometimes. In that case, please use `pdftotext -f <first page> -l <last page> -layout -nopgbrk -raw <pdf> <output>` to output text then modify manually, and use*
+### modify the text manually if the result is not accurate
+
+If the OCR-generated text from the PDF file is inaccurate, you can use this command to extract the text with the original layout:
+
+> `PS> pdftotext -f <first page> -l <last page> -layout -nopgbrk -raw <pdf> <output>`
+
+You can then edit the text file manually to correct any errors, and use
 
 > `PS> table.ps1 <pdf> [<page count of page 1>] [<str>] [<separate char>] -text <text file>`
 
